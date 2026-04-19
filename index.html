@@ -4,12 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P4P — Fan MMA Rankings</title>
-    
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script>
-        // Инициализация Pi SDK
         Pi.init({ version: "1.5", sandbox: true });
-
         async function verifyStep10() {
             try {
                 const payment = await Pi.createPayment({
@@ -17,36 +14,26 @@
                     memo: "Finalizing Step 10 for P4P App",
                     metadata: { orderId: "verification_final" },
                 }, {
-                    onReadyForServerApproval: (paymentId) => {
-                        console.log("Оплата создана, ID:", paymentId);
-                    },
-                    onReadyForServerCompletion: (paymentId, txid) => {
-                        alert("Транзакция прошла успешно! Пункт 10 в чек-листе должен стать зеленым.");
-                    },
-                    onCancel: (paymentId) => { console.log("Платеж отменен"); },
-                    onError: (error, payment) => { console.error("Ошибка SDK:", error); },
+                    onReadyForServerApproval: (paymentId) => { console.log("ID:", paymentId); },
+                    onReadyForServerCompletion: (paymentId, txid) => { alert("Success! Check Step 10 now."); },
+                    onCancel: (paymentId) => { console.log("Cancelled"); },
+                    onError: (error) => { console.error("Error:", error); },
                 });
-            } catch (err) {
-                alert("Ошибка: " + err.message);
-            }
+            } catch (err) { alert("Error: " + err.message); }
         }
     </script>
-
     <style>
-        body { 
-            background-color: #0c0c0d; 
-            color: #fff; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh;
-        }
-        .container { 
-            max-width: 500px; 
-            width: 100%; 
-            border: 2px solid #f3ba2f; 
-            border-radius
-            
+        body { background: #0c0c0d; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { max-width: 400px; border: 2px solid #f3ba2f; border-radius: 20px; padding: 30px; background: #1a1a1b; text-align: center; }
+        h1 { color: #f3ba2f; margin: 0; }
+        .btn { background: #f3ba2f; color: #000; border: none; padding: 15px 25px; font-size: 1.1rem; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>P4P</h1>
+        <p>Нажми кнопку для верификации 10-го шага</p>
+        <button class="btn" onclick="verifyStep10()">Verify Step 10 (0.1 π)</button>
+    </div>
+</body>
+</html>
