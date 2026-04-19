@@ -4,46 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P4P — Fan MMA Rankings</title>
+    
     <script src="https://sdk.minepi.com/pi-sdk.js"></script>
     <script>
-        // Инициализация SDK. Твой кошелек будет получателем платежа.
+        // Инициализация Pi SDK
         Pi.init({ version: "1.5", sandbox: true });
 
-        async function verifyPaymentStep() {
+        async function verifyStep10() {
             try {
                 const payment = await Pi.createPayment({
                     amount: 0.1,
-                    memo: "Verification for P4P App",
-                    metadata: { orderId: "step_10_verification" },
+                    memo: "Finalizing Step 10 for P4P App",
+                    metadata: { orderId: "verification_final" },
                 }, {
                     onReadyForServerApproval: (paymentId) => {
-                        console.log("Оплата создана:", paymentId);
+                        console.log("Оплата создана, ID:", paymentId);
                     },
                     onReadyForServerCompletion: (paymentId, txid) => {
-                        alert("Успешно! Теперь 10-й пункт должен стать зеленым.");
+                        alert("Транзакция прошла успешно! Пункт 10 в чек-листе должен стать зеленым.");
                     },
-                    onCancel: (paymentId) => { console.log("Отменено"); },
-                    onError: (error, payment) => { console.error("Ошибка", error); },
+                    onCancel: (paymentId) => { console.log("Платеж отменен"); },
+                    onError: (error, payment) => { console.error("Ошибка SDK:", error); },
                 });
             } catch (err) {
                 alert("Ошибка: " + err.message);
             }
         }
     </script>
+
     <style>
-        /* Стиль под твой дизайн */
-        body { background: #0c0c0d; color: #fff; font-family: sans-serif; text-align: center; padding: 50px 20px; }
-        .card { border: 2px solid #F5C518; padding: 30px; border-radius: 20px; background: rgba(245, 197, 24, 0.05); }
-        h1 { color: #F5C518; font-size: 3rem; margin-bottom: 10px; }
-        .btn-verify { background: #F5C518; color: #000; border: none; padding: 20px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 12px; cursor: pointer; margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>P4P</h1>
-        <p>Для завершения регистрации (пункт 10) нужно сделать тестовый платеж</p>
-        <button class="btn-verify" onclick="verifyPaymentStep()">ПОДТВЕРДИТЬ ПЛАТЕЖ (0.1 π)</button>
-        <p style="margin-top: 20px; color: #888;">Монеты спишутся только в тестовой сети (Testnet)</p>
-    </div>
-</body>
-</html>
+        body { 
+            background-color: #0c0c0d; 
+            color: #fff; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 500px; 
+            width: 100%; 
+            border: 2px solid #f3ba2f; 
+            border-radius
+            
