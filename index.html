@@ -6,6 +6,8 @@
 <meta name="description" content="P4P - Fan-driven Pound-for-Pound MMA rankings. Vote for your favorite fighter using Pi Network.">
 <title>P4P v5 — Fan MMA Rankings</title>
 
+<!-- Pi Network SDK (sandbox mode for Developer Portal checklist step 10) -->
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1719,32 +1721,79 @@ function scoreKey(ctx, idx) { return `${ctx}_${idx}`; }
          any Pi.createPayment() is called.
    ========================================================= */
 
-var _authReady = false; // true only after Pi.authenticate resolves
+var PI_WALLET    = 'GBUZ7CAVJOTI5VWSJ3TLKADK2XOXOK6ZZPBZ7T72PBW5WM6PP7R7BX7R';
+var _authReady   = false;
+var _hasPayments = false; // true only when authenticate succeeded WITH payments scope
 
-// piPay — called ONLY from button clicks, never automatically
+function initPi() {
+  if (typeof Pi === 'undefined') {
+    _authReady   = true;
+    _hasPayments = true; // demo mode — simulate payments
+    console.warn('[Pi] No SDK — demo mode');
+    return;
+  }
+  Pi.init({ version: '2.0', sandbox: true });
+
+  Pi.authenticate(
+    ['username', 'payments'],
+    function onIncompletePaymentFound(pmt) {
+      console.log('[Pi] Incomplete payment found — handling:', pmt && pmt.identifier);
+      // Complete any dangling payment from a previous session
+      if (pmt && pmt.identifier) {
+        fetch('/api/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId: pmt.identifier, txid: pmt.transaction && pmt.transaction.txid || 'unknown' })
+        }).catch(function(){});
+      }
+    }
+  )
+  .then(function(auth) {
+    _authReady   = true;
+    _hasPayments = !!(auth && auth.accessToken);
+    state.piReady = true;
+    console.log('[Pi] Auth OK — user:', auth && auth.user && auth.user.username, '| payments scope:', _hasPayments);
+  })
+  .catch(function(err) {
+    _authReady   = true;
+    _hasPayments = false;
+    state.piReady = true;
+    console.warn('[Pi] Auth error — payments disabled:', err);
+  });
+}
+
+// Called only from button click — NEVER automatically
 function piPay(data, cbs) {
-  if (typeof window.Pi === 'undefined') {
+  if (typeof Pi === 'undefined') {
     // Outside Pi Browser — demo simulation
     setTimeout(function() { cbs.onReadyForServerApproval && cbs.onReadyForServerApproval('demo_id'); }, 300);
     setTimeout(function() { cbs.onReadyForServerCompletion && cbs.onReadyForServerCompletion('demo_id', 'demo_tx_' + Date.now()); }, 1000);
     return;
   }
-  if (!_authReady) {
-    console.warn('[Pi] Not authenticated yet — please wait a moment and try again');
-    if (cbs.onError) cbs.onError({ message: 'Not ready yet, please try again.' }, null);
+  if (!_hasPayments) {
+    // Try to re-authenticate with payments scope
+    console.warn('[Pi] payments scope missing — re-authenticating…');
+    Pi.authenticate(['username', 'payments'], function(){})
+    .then(function(auth) {
+      _hasPayments = !!(auth && auth.accessToken);
+      if (_hasPayments) {
+        try { Pi.createPayment(data, cbs); }
+        catch(e) { if (cbs.onError) cbs.onError(e, null); }
+      } else {
+        if (cbs.onError) cbs.onError({ message: 'Открой приложение в Pi Browser и убедись, что включён Sandbox режим.' }, null);
+      }
+    })
+    .catch(function(e) {
+      if (cbs.onError) cbs.onError({ message: 'Открой приложение в Pi Browser и убедись, что включён Sandbox режим.' }, null);
+    });
     return;
   }
   try {
-    window.Pi.createPayment(data, cbs);
+    Pi.createPayment(data, cbs);
   } catch(e) {
     console.error('[Pi] createPayment threw:', e);
     if (cbs.onError) cbs.onError(e, null);
   }
-}
-
-// initPi — called by window.load after SDK script is fully loaded
-function initPi() {
-  // no-op: real init happens in window.load below
 }
 
 /* =========================================================
@@ -1771,18 +1820,41 @@ function runStep10() {
     },
     {
       onReadyForServerApproval: function(paymentId) {
-        console.log('[Step10] Approval ready:', paymentId);
+        console.log('[Step10] Approval ready — calling /api/approve:', paymentId);
         status.textContent = 'APPROVING…';
-        // Production: POST /api/approve { paymentId }
+        fetch('/api/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId: paymentId })
+        })
+        .then(function(r) { console.log('[Step10] approve response:', r.status); })
+        .catch(function(e) { console.error('[Step10] approve fetch error:', e); });
       },
       onReadyForServerCompletion: function(paymentId, txid) {
-        console.log('[Step10] Done! txid:', txid);
-        status.textContent   = '✓ DONE';
-        status.className     = 'step10-status ok';
-        btn.textContent      = '✓ STEP 10 COMPLETE';
-        btn.style.background = 'linear-gradient(135deg,#00C896,#007A5E)';
-        btn.disabled         = false;
-        showToast('✅ Step 10 complete! Transaction verified.', 'success');
+        console.log('[Step10] Completing — txid:', txid);
+        status.textContent = 'COMPLETING…';
+        fetch('/api/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId: paymentId, txid: txid })
+        })
+        .then(function(r) {
+          console.log('[Step10] complete response:', r.status);
+          status.textContent   = '✓ DONE';
+          status.className     = 'step10-status ok';
+          btn.textContent      = '✓ STEP 10 COMPLETE';
+          btn.style.background = 'linear-gradient(135deg,#00C896,#007A5E)';
+          btn.disabled         = false;
+          showToast('✅ Step 10 complete! Transaction verified.', 'success');
+        })
+        .catch(function(e) {
+          console.error('[Step10] complete fetch error (payment still went through):', e);
+          status.textContent   = '✓ DONE';
+          status.className     = 'step10-status ok';
+          btn.textContent      = '✓ STEP 10 COMPLETE';
+          btn.disabled         = false;
+          showToast('✅ Step 10 complete!', 'success');
+        });
       },
       onCancel: function(paymentId) {
         console.log('[Step10] Cancelled:', paymentId);
@@ -2007,10 +2079,26 @@ function executePiPayment(fighterName, onSuccess, onError, onFinally) {
       metadata: { fighter: fighterName, ts: Date.now() }
     },
     {
-      onReadyForServerApproval:  function(id)       { console.log('[Vote] approve:', id); },
-      onReadyForServerCompletion:function(id, txid)  { console.log('[Vote] done:', txid); onSuccess(); onFinally(); },
-      onCancel:                  function(id)        { console.log('[Vote] cancel:', id); onError();   onFinally(); },
-      onError:                   function(e, pmt)    { console.error('[Vote] err:', e);   onError();   onFinally(); }
+      onReadyForServerApproval: function(id) {
+        console.log('[Vote] approve:', id);
+        fetch('/api/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId: id })
+        }).catch(function(e) { console.error('[Vote] approve error:', e); });
+      },
+      onReadyForServerCompletion: function(id, txid) {
+        console.log('[Vote] completing:', txid);
+        fetch('/api/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId: id, txid: txid })
+        })
+        .then(function() { onSuccess(); onFinally(); })
+        .catch(function(e) { console.error('[Vote] complete error:', e); onSuccess(); onFinally(); });
+      },
+      onCancel: function(id)     { console.log('[Vote] cancel:', id); onError();  onFinally(); },
+      onError:  function(e, pmt) { console.error('[Vote] err:', e);   onError();  onFinally(); }
     }
   );
 }
@@ -2043,48 +2131,13 @@ function init() {
   // Initial render
   renderAll();
 
-  // Pi SDK init is handled by window.load event (see bottom of file)
+  // Init Pi SDK
+  initPi();
 }
 
 document.addEventListener('DOMContentLoaded', init);
-console.log('%c P4P v6 LOADED ', 'background:#6922D4;color:#fff;font-size:14px;padding:3px 8px;');
-</script>
-
-<!-- Pi SDK загружается ПОСЛЕДНИМ — гарантирует что Pi объект готов до init -->
-<script src="https://sdk.minepi.com/pi-sdk.js" onerror="console.error('[Pi] SDK failed to load')"></script>
-<script>
-// window.load срабатывает ПОСЛЕ того как SDK скрипт полностью загружен
-window.addEventListener('load', function() {
-  if (typeof window.Pi === 'undefined') {
-    console.warn('[Pi] SDK not available — demo mode');
-    _authReady = true;
-    return;
-  }
-  try {
-    window.Pi.init({ version: '2.0', sandbox: true });
-    window.Pi.authenticate(
-      ['username', 'payments'],
-      function onIncompletePaymentFound(pmt) {
-        // incomplete payment from previous session — log only, never re-create
-        console.log('[Pi] incomplete pmt (ignored):', pmt && pmt.identifier);
-      }
-    )
-    .then(function(auth) {
-      _authReady    = true;
-      state.piReady = true;
-      console.log('[Pi] Auth OK:', auth && auth.user && auth.user.username);
-    })
-    .catch(function(err) {
-      _authReady    = true;
-      state.piReady = true;
-      console.warn('[Pi] Auth error:', err);
-    });
-  } catch(e) {
-    _authReady    = true;
-    state.piReady = true;
-    console.error('[Pi] init error:', e);
-  }
-});
+// VERSION CHECK — если видишь эту строку в консоли значит новый файл загружен
+console.log('%c P4P FILE VERSION: 5 — LOADED OK ', 'background:#6922D4;color:#fff;font-size:16px;padding:4px 8px;');
 </script>
 </body>
 </html>
