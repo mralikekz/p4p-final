@@ -1721,6 +1721,42 @@ function scoreKey(ctx, idx) { return `${ctx}_${idx}`; }
          any Pi.createPayment() is called.
    ========================================================= */
 
+/* ---- Backend API (Replit server with PostgreSQL) ---- */
+var API_BASE = 'https://fa3c9610-5060-4f7b-9fc8-a149996ba327-00-1rsocrq601kmg.sisko.replit.dev/api';
+
+/* ---- Load global votes from server ---- */
+function loadVotesFromServer() {
+  fetch(API_BASE + '/votes')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && Array.isArray(data.votes)) {
+        data.votes.forEach(function(v) {
+          state.scores[v.fighter_key] = Number(v.points) || 0;
+          state.totalVotes += Number(v.vote_count) || 0;
+          state.totalPi   += Number(v.pi_amount)   || 0;
+        });
+        renderAll();
+        console.log('[DB] Loaded', data.votes.length, 'fighters from server');
+      }
+    })
+    .catch(function(e) { console.warn('[DB] Could not load votes:', e.message); });
+}
+
+/* ---- Save a vote to server ---- */
+function saveVoteToServer(fighterKey, fighterName, division, points, piAmount) {
+  fetch(API_BASE + '/votes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fighter_key:  fighterKey,
+      fighter_name: fighterName,
+      division:     division,
+      points:       points,
+      pi_amount:    piAmount
+    })
+  }).catch(function(e) { console.warn('[DB] Could not save vote:', e.message); });
+}
+
 var PI_WALLET    = 'GCXCW4REFA6PMYKOOI5N7F53P4HJR2SETBIOVTVH3ZAFFG35G47OMTWG';
 var _authReady   = false;
 var _hasPayments = false; // true only when authenticate succeeded WITH payments scope
@@ -2051,10 +2087,13 @@ function confirmVote() {
   executePiPayment(name,
     // onSuccess
     () => {
-      const key = state.pending.scoreKey;
+      const key  = state.pending.scoreKey;
+      const pName = state.pending.name;
+      const pDiv  = state.pending.division;
       state.scores[key] = (state.scores[key] || 0) + 100;
       state.totalVotes++;
       state.totalPi += 1;
+      saveVoteToServer(key, pName, pDiv, 100, 1);
       closeModal();
       renderAll();
       showToast(`${T('toastSuccess')} ${name} ${T('toastPts')}`, 'success');
@@ -2131,13 +2170,16 @@ function init() {
   // Initial render
   renderAll();
 
+  // Load global votes from server (persisted across all users)
+  loadVotesFromServer();
+
   // Init Pi SDK
   initPi();
 }
 
 document.addEventListener('DOMContentLoaded', init);
 // VERSION CHECK — если видишь эту строку в консоли значит новый файл загружен
-console.log('%c P4P FILE VERSION: 5 — LOADED OK ', 'background:#6922D4;color:#fff;font-size:16px;padding:4px 8px;');
+console.log('%c P4P FILE VERSION: 6 — LOADED OK (with DB) ', 'background:#6922D4;color:#fff;font-size:16px;padding:4px 8px;');
 </script>
 </body>
 </html>
