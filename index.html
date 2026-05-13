@@ -414,83 +414,6 @@ h1, h2, h3, .display {
 .fighter-photo.sz-lg { display: none; }
 .fighter-photo.sz-sm { display: none; }
 
-/* =============================================
-   STEP 10 — VERIFY TRANSACTION BANNER
-   ============================================= */
-.step10-banner {
-  position: relative;
-  z-index: 10;
-  background: linear-gradient(135deg, rgba(105,34,212,0.18) 0%, rgba(245,197,24,0.10) 100%);
-  border-bottom: 2px solid var(--border-pi);
-  padding: 12px 16px;
-}
-.step10-inner {
-  max-width: 960px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-.step10-label {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--pi-light);
-  flex-shrink: 0;
-}
-.step10-desc {
-  flex: 1;
-  font-size: 13px;
-  color: var(--text-muted);
-  min-width: 180px;
-}
-.step10-status {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 12px;
-  padding: 4px 12px;
-  border-radius: 100px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  flex-shrink: 0;
-  transition: all 0.3s;
-}
-.step10-status.ok  { color: var(--green); border-color: rgba(0,200,150,0.4); background: rgba(0,200,150,0.08); }
-.step10-status.err { color: var(--red);   border-color: rgba(232,52,74,0.4);  background: rgba(232,52,74,0.08); }
-.btn-step10 {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: 2px;
-  padding: 9px 22px;
-  background: linear-gradient(135deg, var(--gold-dim) 0%, #7A4A00 100%);
-  border: 1px solid rgba(245,197,24,0.4);
-  border-radius: var(--radius-sm);
-  color: #fff;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.15s;
-  box-shadow: 0 2px 14px rgba(245,197,24,0.25);
-}
-.btn-step10:hover {
-  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
-  box-shadow: 0 4px 22px rgba(245,197,24,0.45);
-  transform: translateY(-1px);
-}
-.btn-step10:active  { transform: translateY(0); }
-.btn-step10:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-.btn-step10 .spin {
-  display: inline-block;
-  width: 13px; height: 13px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  vertical-align: middle;
-  margin-right: 6px;
-}
 
 /* Rank number */
 .rank-num {
@@ -686,34 +609,6 @@ h1, h2, h3, .display {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 1px;
-}
-.fr-pts {
-  font-family: 'Share Tech Mono', monospace;
-  font-size: 11px;
-  color: var(--pi-light);
-  min-width: 64px;
-  text-align: right;
-  flex-shrink: 0;
-}
-.btn-vote-sm {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 1px;
-  padding: 6px 12px;
-  background: rgba(139,63,245,0.12);
-  border: 1px solid var(--border-pi);
-  border-radius: var(--radius-sm);
-  color: var(--pi-light);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background var(--speed), color var(--speed), box-shadow var(--speed);
-  white-space: nowrap;
-}
-.btn-vote-sm:hover {
-  background: rgba(139,63,245,0.28);
-  color: #fff;
-  box-shadow: 0 3px 14px rgba(139,63,245,0.4);
 }
 
 /* Tag for interim/note */
@@ -986,9 +881,7 @@ h1, h2, h3, .display {
    ============================================= */
 @media (max-width: 580px) {
   .score-wrap { display: none; }
-  .fr-pts { display: none; }
   .btn-vote { font-size: 13px; padding: 7px 12px; }
-  .btn-vote-sm { font-size: 12px; padding: 5px 10px; }
   .fighter-name { font-size: 15px; }
   .p4p-card { gap: 9px; padding: 9px 11px; }
   .fighter-row { gap: 8px; padding: 8px 10px; }
@@ -1003,18 +896,6 @@ h1, h2, h3, .display {
 
 <div class="bg-ambient"></div>
 
-<!-- ============================
-     STEP 10 — PROCESS A TRANSACTION
-     Developer Portal Checklist Item #10
-     ============================ -->
-<div class="step10-banner" id="step10Banner">
-  <div class="step10-inner">
-    <div class="step10-label">⚙️ Dev Checklist · Step 10</div>
-    <div class="step10-desc">Process a Transaction — triggers a real 1.0 π sandbox payment to verify your app in the Pi Developer Portal.</div>
-    <div class="step10-status" id="step10Status">PENDING</div>
-    <button class="btn-step10" id="btnStep10" onclick="runStep10()">VERIFY STEP 10</button>
-  </div>
-</div>
 <header class="app-header">
   <div class="header-inner">
     <div class="header-top">
@@ -1708,11 +1589,9 @@ const state = {
   scores: {},          // key → points
   totalVotes: 0,
   totalPi: 0,
-  pending: null,       // { scoreKey, name, division, photoName }
+  pending: null,       // { scoreKey, name, flag, division }
   piReady: false,
 };
-
-function scoreKey(ctx, idx) { return `${ctx}_${idx}`; }
 
 /* =========================================================
    PI SDK — CLEAN IMPLEMENTATION
@@ -1832,85 +1711,6 @@ function piPay(data, cbs) {
   }
 }
 
-/* =========================================================
-   STEP 10 — PROCESS A TRANSACTION (Developer Portal)
-   =========================================================
-   This function fires a real Pi sandbox payment of 1.0 π.
-   It satisfies checklist item #10 "Process a Transaction"
-   in the Pi Developer Portal.
-   ========================================================= */
-function runStep10() {
-  var btn    = document.getElementById('btnStep10');
-  var status = document.getElementById('step10Status');
-
-  btn.disabled       = true;
-  btn.innerHTML      = '<span class="spin"></span>PROCESSING…';
-  status.textContent = 'RUNNING';
-  status.className   = 'step10-status';
-
-  piPay(
-    {
-      amount:   1.0,
-      memo:     'P4P Step10 Transaction Test',
-      metadata: { app: 'P4P Fan Rankings', step: 10, ts: Date.now() }
-    },
-    {
-      onReadyForServerApproval: function(paymentId) {
-        console.log('[Step10] Approval ready — calling /api/approve:', paymentId);
-        status.textContent = 'APPROVING…';
-        fetch('/api/approve', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentId: paymentId })
-        })
-        .then(function(r) { console.log('[Step10] approve response:', r.status); })
-        .catch(function(e) { console.error('[Step10] approve fetch error:', e); });
-      },
-      onReadyForServerCompletion: function(paymentId, txid) {
-        console.log('[Step10] Completing — txid:', txid);
-        status.textContent = 'COMPLETING…';
-        fetch('/api/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentId: paymentId, txid: txid })
-        })
-        .then(function(r) {
-          console.log('[Step10] complete response:', r.status);
-          status.textContent   = '✓ DONE';
-          status.className     = 'step10-status ok';
-          btn.textContent      = '✓ STEP 10 COMPLETE';
-          btn.style.background = 'linear-gradient(135deg,#00C896,#007A5E)';
-          btn.disabled         = false;
-          showToast('✅ Step 10 complete! Transaction verified.', 'success');
-        })
-        .catch(function(e) {
-          console.error('[Step10] complete fetch error (payment still went through):', e);
-          status.textContent   = '✓ DONE';
-          status.className     = 'step10-status ok';
-          btn.textContent      = '✓ STEP 10 COMPLETE';
-          btn.disabled         = false;
-          showToast('✅ Step 10 complete!', 'success');
-        });
-      },
-      onCancel: function(paymentId) {
-        console.log('[Step10] Cancelled:', paymentId);
-        status.textContent = 'CANCELLED';
-        status.className   = 'step10-status err';
-        btn.innerHTML      = 'VERIFY STEP 10';
-        btn.disabled       = false;
-        showToast('Payment cancelled. Try again.', 'error');
-      },
-      onError: function(error, payment) {
-        console.error('[Step10] Error:', error, payment);
-        status.textContent = 'ERROR';
-        status.className   = 'step10-status err';
-        btn.innerHTML      = 'VERIFY STEP 10';
-        btn.disabled       = false;
-        showToast('Error: ' + (error && (error.message || JSON.stringify(error))), 'error');
-      }
-    }
-  );
-}
 
 /* =========================================================
    NAVIGATION BUILD
@@ -1991,7 +1791,7 @@ function renderP4P() {
         <div class="score-pts">${f.pts > 0 ? f.pts.toLocaleString() + ' ' + T('pts') : '—'}</div>
         <div class="score-bar-bg"><div class="score-bar-fill" style="width:${pct}%"></div></div>
       </div>
-      <button class="btn-vote" onclick="openModal(${JSON.stringify(f.name)},${JSON.stringify(f.flag)},${JSON.stringify(f.div)},'p4p',${f.officialRank - 1})">1π</button>
+      <button class="btn-vote" onclick="openModal(${JSON.stringify(f.name)},${JSON.stringify(f.flag)},${JSON.stringify(f.div)},${f.officialRank - 1})">1π</button>
     `;
     container.appendChild(card);
   });
@@ -2004,8 +1804,7 @@ function renderWeightClass(wc) {
   const container = document.getElementById(`list-${wc.id}`);
   if (!container) return;
   container.innerHTML = '';
-  wc.fighters.forEach((f, idx) => {
-    const pts = state.scores[scoreKey(wc.id, idx)] || 0;
+  wc.fighters.forEach((f) => {
     const row = document.createElement('div');
     row.className = 'fighter-row';
     row.innerHTML = `
@@ -2014,8 +1813,6 @@ function renderWeightClass(wc) {
         <div class="fr-name"><span class="flag">${f.flag}</span>${f.name}${f.note ? `<span class="tag-note">${f.note}</span>` : ''}</div>
         <div class="fr-record">${f.record} · ${wc.label}</div>
       </div>
-      <div class="fr-pts">${pts > 0 ? pts.toLocaleString() + ' ' + T('pts') : ''}</div>
-      <button class="btn-vote-sm" onclick="openModal(${JSON.stringify(f.name)},${JSON.stringify(f.flag)},${JSON.stringify(wc.label)},${JSON.stringify(wc.id)},${idx})">1π</button>
     `;
     container.appendChild(row);
   });
@@ -2047,9 +1844,9 @@ function showPage(id, btn) {
 /* =========================================================
    MODAL
    ========================================================= */
-function openModal(name, flag, division, ctx, idx) {
+function openModal(name, flag, division, idx) {
   state.pending = {
-    scoreKey: ctx === 'p4p' ? `p4p_${idx}` : scoreKey(ctx, idx),
+    scoreKey: `p4p_${idx}`,
     name, flag, division
   };
   document.getElementById('mName').textContent = flag + ' ' + name;
@@ -2179,7 +1976,7 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 // VERSION CHECK — если видишь эту строку в консоли значит новый файл загружен
-console.log('%c P4P FILE VERSION: 6 — LOADED OK (with DB) ', 'background:#6922D4;color:#fff;font-size:16px;padding:4px 8px;');
+console.log('%c P4P FILE VERSION: 8 — CLEAN BUILD ', 'background:#6922D4;color:#fff;font-size:16px;padding:4px 8px;');
 </script>
 </body>
 </html>
